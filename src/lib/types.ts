@@ -45,6 +45,9 @@ export interface Ajustes {
   plantilla_cambio: string
   plantilla_saldo: string
   plantilla_cumpleanos: string
+  cuidados: string | null
+  formacion: string | null
+  medios_pago: string | null
 }
 
 export interface AjustesPublicos {
@@ -71,6 +74,9 @@ export interface AjustesPublicos {
   sena_valor: number
   datos_transferencia: string | null
   politica_cancelacion: string | null
+  cuidados: string | null
+  formacion: string | null
+  medios_pago: string | null
   horarios: { dia: number; inicio: string; fin: string }[]
 }
 

@@ -1,4 +1,4 @@
-import { CalendarHeart, Clock, MapPin, MessageCircle, Sparkles, Tag } from 'lucide-react'
+import { Award, CalendarHeart, Clock, CreditCard, HeartHandshake, MapPin, MessageCircle, Sparkles, Tag } from 'lucide-react'
 import { Instagram } from '@/components/IconoInstagram'
 import { Link } from 'react-router-dom'
 import { claseBoton } from '@/components/ui/Button'
@@ -11,6 +11,10 @@ import { linkInstagram, urlSegura } from '@/lib/telefono'
 import type { AjustesPublicos } from '@/lib/types'
 import { linkWhatsApp } from '@/lib/whatsapp'
 import { useFotosPublicas, usePromosPublicas, useServiciosPublicos } from './publico'
+
+function lineas(t: string | null | undefined): string[] {
+  return (t ?? '').split(/\r?\n/).map((l) => l.replace(/^[-•·*]\s*/, '').trim()).filter(Boolean)
+}
 
 export function horariosLegibles(a: AjustesPublicos | undefined): string[] {
   if (!a) return []
@@ -27,7 +31,10 @@ export function HomePage() {
   const promos = usePromosPublicas()
   const insta = linkInstagram(a?.instagram)
   const portada = urlPublica(a?.portada_path) ?? urlPublica(fotos.data?.fotos[0]?.storage_path)
-  const principales = servicios.data?.servicios.filter((s) => !s.es_adicional).slice(0, 6) ?? []
+  const ordenCat = new Map(servicios.data?.categorias.map((c) => [c.id, c.orden]) ?? [])
+  const principales = [...(servicios.data?.servicios.filter((s) => !s.es_adicional) ?? [])]
+    .sort((x, y) => (ordenCat.get(x.categoria_id ?? '') ?? 99) - (ordenCat.get(y.categoria_id ?? '') ?? 99) || x.orden - y.orden)
+    .slice(0, 6)
   const horarios = horariosLegibles(a)
 
   return (
@@ -48,6 +55,8 @@ export function HomePage() {
                 <Link to="/reservar" className={claseBoton('oscuro', 'lg')}><CalendarHeart className="size-5" /> Pedir turno</Link>
               ) : a?.whatsapp ? (
                 <a href={linkWhatsApp(a.whatsapp, '¡Hola! Quería pedir un turno 💅')} target="_blank" rel="noreferrer" className={claseBoton('oscuro', 'lg')}><MessageCircle className="size-5" /> Pedir turno por WhatsApp</a>
+              ) : insta ? (
+                <a href={insta} target="_blank" rel="noreferrer" className={claseBoton('oscuro', 'lg')}><Instagram className="size-5" /> Escribime por Instagram</a>
               ) : null}
               <Link to="/servicios" className={claseBoton('secundario', 'lg')}>Ver servicios y precios</Link>
             </div>
@@ -96,6 +105,21 @@ export function HomePage() {
         </section>
       )}
 
+      {/* Formación */}
+      {lineas(a?.formacion).length > 0 && (
+        <section className="mx-auto mt-16 max-w-6xl px-4 sm:px-6">
+          <div className="rounded-[2rem] bg-nude-50 px-6 py-8 sm:px-10">
+            <h2 className="titulo-display mb-4 flex items-center gap-2 text-3xl"><Award className="size-6 text-rosa-500" /> Formación</h2>
+            <ul className="grid gap-x-8 gap-y-2 sm:grid-cols-2">
+              {lineas(a?.formacion).map((l) => (
+                <li key={l} className="flex gap-2 text-tinta-soft"><span className="mt-2 size-1.5 shrink-0 rounded-full bg-rosa-400" />{l}</li>
+              ))}
+            </ul>
+            <Link to="/trabajos?categoria=certificados" className="mt-4 inline-block text-sm text-rosa-600 hover:underline">Ver certificados</Link>
+          </div>
+        </section>
+      )}
+
       {/* Servicios */}
       {principales.length > 0 && (
         <section className="mx-auto mt-20 max-w-6xl px-4 sm:px-6">
@@ -138,6 +162,29 @@ export function HomePage() {
         </section>
       )}
 
+      {/* Cuidados y antes de tu turno */}
+      {(lineas(a?.cuidados).length > 0 || a?.medios_pago || a?.politica_cancelacion) && (
+        <section className="mx-auto mt-20 grid max-w-6xl gap-4 px-4 sm:px-6 md:grid-cols-2">
+          {lineas(a?.cuidados).length > 0 && (
+            <div className="tarjeta p-6">
+              <h2 className="titulo-display mb-3 flex items-center gap-2 text-3xl"><HeartHandshake className="size-6 text-rosa-500" /> Cuidados</h2>
+              <ul className="space-y-2.5">
+                {lineas(a?.cuidados).map((l) => (
+                  <li key={l} className="flex gap-2 text-[15px] text-tinta-soft"><span className="mt-2 size-1.5 shrink-0 rounded-full bg-rosa-400" />{l}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {(a?.medios_pago || a?.politica_cancelacion) && (
+            <div className="tarjeta p-6">
+              <h2 className="titulo-display mb-3 flex items-center gap-2 text-3xl"><CreditCard className="size-6 text-rosa-500" /> Antes de tu turno</h2>
+              {a?.medios_pago && <p className="mb-3 text-tinta-soft"><b className="text-tinta">Medios de pago:</b> {a.medios_pago}</p>}
+              {a?.politica_cancelacion && <p className="whitespace-pre-line text-[15px] text-tinta-soft">{a.politica_cancelacion}</p>}
+            </div>
+          )}
+        </section>
+      )}
+
       {/* Ubicación y horarios */}
       {(horarios.length > 0 || a?.direccion || a?.zona) && (
         <section className="mx-auto mt-20 grid max-w-6xl gap-4 px-4 sm:px-6 md:grid-cols-2">
@@ -160,9 +207,23 @@ export function HomePage() {
       {/* Llamado final */}
       <section className="mx-auto mt-20 max-w-6xl px-4 sm:px-6">
         <div className="rounded-[2rem] bg-gradient-to-br from-rosa-100 via-nude-100 to-beige px-6 py-12 text-center">
-          <h2 className="titulo-display text-4xl">¿Te reservo un lugar?</h2>
-          <p className="mx-auto mt-2 max-w-md text-tinta-soft">Elegí el servicio, mirá los horarios libres y pedí tu turno en un minuto.</p>
-          <Link to="/reservar" className={claseBoton('oscuro', 'lg', 'mt-6')}>Pedir turno</Link>
+          {a?.reservas_web_activas !== false ? (
+            <>
+              <h2 className="titulo-display text-4xl">¿Te reservo un lugar?</h2>
+              <p className="mx-auto mt-2 max-w-md text-tinta-soft">Elegí el servicio, mirá los horarios libres y pedí tu turno en un minuto.</p>
+              <Link to="/reservar" className={claseBoton('oscuro', 'lg', 'mt-6')}>Pedir turno</Link>
+            </>
+          ) : (
+            <>
+              <h2 className="titulo-display text-4xl">Muy pronto, turnos online</h2>
+              <p className="mx-auto mt-2 max-w-md text-tinta-soft">Mientras tanto, escribime y coordinamos.</p>
+              {a?.whatsapp ? (
+                <a href={linkWhatsApp(a.whatsapp, '¡Hola! Quería consultar por un turno 💅')} target="_blank" rel="noreferrer" className={claseBoton('oscuro', 'lg', 'mt-6')}><MessageCircle className="size-5" /> Escribime por WhatsApp</a>
+              ) : insta ? (
+                <a href={insta} target="_blank" rel="noreferrer" className={claseBoton('oscuro', 'lg', 'mt-6')}><Instagram className="size-5" /> Escribime por Instagram</a>
+              ) : null}
+            </>
+          )}
         </div>
       </section>
     </>

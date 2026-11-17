@@ -36,6 +36,7 @@ export async function subirImagen(file: File, carpeta: 'galeria' | 'servicios' |
 }
 
 export async function borrarImagen(path: string | null | undefined) {
-  if (!path) return
+  // Las fotos incluidas en el sitio (/contenido/...) no están en Storage
+  if (!path || path.startsWith('/')) return
   await supabase.storage.from(BUCKET_FOTOS).remove([path])
 }

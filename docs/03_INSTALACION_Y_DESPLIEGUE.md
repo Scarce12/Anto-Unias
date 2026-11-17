@@ -15,6 +15,8 @@ Costo: Supabase y Vercel tienen planes gratuitos que alcanzan de sobra para un e
 
 > El bucket de fotos (`fotos`) y sus permisos se crean solos con el SQL.
 
+> **Datos de Pochitas Nails:** después del SQL de instalación, correr una vez `supabase/datos/pochitas_nails_inicial.sql` (servicios, textos, galería). Las fotos de esa carga están en `public/contenido/` y se publican junto con el sitio.
+
 ## 2. Probar en tu computadora (opcional)
 
 Necesitás Node.js 22.12 o superior.

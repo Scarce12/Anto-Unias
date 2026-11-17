@@ -73,7 +73,7 @@ function Pie({ onClick, cargando }: { onClick: () => void; cargando: boolean }) 
 // ---------------------------------------------------------------- Negocio
 function Negocio({ a }: { a: Ajustes }) {
   const { f, set, enviar, guardando } = useFormAjustes(a)
-  const campos: (keyof Ajustes)[] = ['nombre_negocio', 'eslogan', 'presentacion', 'nombre_manicurista', 'whatsapp', 'instagram', 'direccion', 'zona', 'maps_url', 'horarios_texto', 'logo_path', 'portada_path', 'foto_perfil_path']
+  const campos: (keyof Ajustes)[] = ['nombre_negocio', 'eslogan', 'presentacion', 'nombre_manicurista', 'whatsapp', 'instagram', 'direccion', 'zona', 'maps_url', 'horarios_texto', 'logo_path', 'portada_path', 'foto_perfil_path', 'medios_pago', 'formacion', 'cuidados']
   return (
     <div className="space-y-5">
       <Tarjeta className="grid gap-4 p-5 sm:grid-cols-2">
@@ -94,6 +94,12 @@ function Negocio({ a }: { a: Ajustes }) {
         <Input etiqueta="Zona / barrio" opcional value={f.zona ?? ''} onChange={(e) => set('zona', e.target.value)} />
         <Input contenedor="sm:col-span-2" etiqueta="Link de Google Maps" opcional value={f.maps_url ?? ''} onChange={(e) => set('maps_url', e.target.value)} />
         <Textarea contenedor="sm:col-span-2" etiqueta="Texto de horarios para la web" opcional rows={2} value={f.horarios_texto ?? ''} onChange={(e) => set('horarios_texto', e.target.value)} ayuda="Si lo dejás vacío, se arma solo con tus horarios de atención." />
+      </Tarjeta>
+      <Tarjeta className="grid gap-4 p-5">
+        <h2 className="titulo-display text-xl">Información para tus clientas</h2>
+        <Input etiqueta="Medios de pago" opcional value={f.medios_pago ?? ''} onChange={(e) => set('medios_pago', e.target.value)} placeholder="Efectivo, Mercado Pago y transferencia" />
+        <Textarea etiqueta="Formación" opcional rows={6} value={f.formacion ?? ''} onChange={(e) => set('formacion', e.target.value)} ayuda="Un curso por renglón. Se muestra en la web." />
+        <Textarea etiqueta="Cuidados" opcional rows={8} value={f.cuidados ?? ''} onChange={(e) => set('cuidados', e.target.value)} ayuda="Un consejo por renglón. Se muestra en la web." />
       </Tarjeta>
       <Pie cargando={guardando} onClick={() => enviar(campos, () => (f.whatsapp && !telefonoValido(f.whatsapp) ? 'El WhatsApp no parece válido.' : f.maps_url && !urlSegura(f.maps_url) ? 'El link de Google Maps tiene que empezar con https://' : null))} />
     </div>

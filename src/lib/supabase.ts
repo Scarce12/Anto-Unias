@@ -19,6 +19,7 @@ export const BUCKET_FOTOS = 'fotos'
 
 export function urlPublica(path: string | null | undefined): string | null {
   if (!path) return null
-  if (/^https?:\/\//.test(path)) return path
+  // Imágenes incluidas en el sitio (public/contenido) o URLs completas
+  if (path.startsWith('/contenido/') || /^https:\/\//.test(path)) return path
   return supabase.storage.from(BUCKET_FOTOS).getPublicUrl(path).data.publicUrl
 }

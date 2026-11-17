@@ -1,13 +1,21 @@
 import clsx from 'clsx'
 import { ChevronLeft, ChevronRight, Images, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Cargando, ErrorCarga, Vacio } from '@/components/ui/Basicos'
 import { urlPublica } from '@/lib/supabase'
 import { useFotosPublicas } from './publico'
 
 export function GaleriaPublicPage() {
   const q = useFotosPublicas()
+  const [params] = useSearchParams()
   const [cat, setCat] = useState('')
+  // /trabajos?categoria=certificados abre directo esa categoría
+  useEffect(() => {
+    const pedida = params.get('categoria')?.toLowerCase()
+    const c = q.data?.categorias.find((x) => x.nombre.toLowerCase() === pedida)
+    if (c) setCat(c.id)
+  }, [params, q.data])
   const [abierta, setAbierta] = useState<number | null>(null)
   const fotos = q.data?.fotos.filter((f) => !cat || f.categoria_id === cat) ?? []
   const cats = q.data?.categorias.filter((c) => q.data!.fotos.some((f) => f.categoria_id === c.id)) ?? []
