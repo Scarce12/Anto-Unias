@@ -1,0 +1,94 @@
+@import 'tailwindcss';
+
+/* Paleta: rosa empolvado, nude, beige, blanco cálido y acentos oscuros */
+@theme {
+  --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Cormorant Garamond', ui-serif, Georgia, serif;
+
+  --color-crema: #fffbf7;
+  --color-nude-50: #fbf5f1;
+  --color-nude-100: #f5e9e2;
+  --color-nude-200: #ead7cc;
+  --color-nude-300: #dcc0b0;
+  --color-beige: #e9dccb;
+
+  --color-rosa-50: #fbf1f2;
+  --color-rosa-100: #f6e1e3;
+  --color-rosa-200: #ecc6ca;
+  --color-rosa-300: #dea2a9;
+  --color-rosa-400: #cb8590;
+  --color-rosa-500: #b7727f;
+  --color-rosa-600: #9c5a67;
+  --color-rosa-700: #7f4653;
+
+  --color-tinta: #2e2326;
+  --color-tinta-soft: #4a3c40;
+  --color-gris: #8a7b7e;
+  --color-linea: #eadfda;
+
+  --radius-xl: 0.9rem;
+  --radius-2xl: 1.2rem;
+
+  --shadow-suave: 0 1px 2px rgb(46 35 38 / 0.04), 0 4px 16px rgb(46 35 38 / 0.06);
+  --shadow-flotante: 0 8px 30px rgb(46 35 38 / 0.12);
+
+  --animate-aparecer: aparecer 0.25s ease-out;
+  --animate-subir: subir 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  @keyframes aparecer {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes subir {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    color-scheme: light;
+  }
+  body {
+    @apply bg-crema text-tinta font-sans antialiased;
+    min-height: 100dvh;
+  }
+  h1, h2, h3 {
+    @apply text-tinta;
+  }
+  input, select, textarea, button {
+    font: inherit;
+  }
+  /* Evita el zoom automático de iOS al enfocar campos */
+  input, select, textarea {
+    font-size: max(16px, 1em);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-rosa-400);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .titulo-display {
+    @apply font-display font-semibold tracking-tight;
+  }
+  .tarjeta {
+    @apply rounded-2xl border border-linea bg-white shadow-suave;
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .scroll-fino {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-nude-300) transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
