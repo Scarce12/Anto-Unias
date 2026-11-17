@@ -252,23 +252,42 @@ export function useQuitarDeAviso() {
 }
 
 // ---------------- Calendario personal ----------------
-export function useCalendario(anio: number) {
+/** Marcas entre dos fechas (yyyy-MM-dd, inclusive) */
+export function useCalendario(desde: string, hasta: string) {
   return useQuery({
-    queryKey: ['calendario', anio],
+    queryKey: ['calendario', desde, hasta],
     queryFn: async () =>
-      datos<MarcaCalendario[]>(await supabase.from('calendario_personal').select('*').gte('fecha', `${anio}-01-01`).lte('fecha', `${anio}-12-31`)),
+      datos<MarcaCalendario[]>(
+        await supabase.from('calendario_personal').select('*').gte('fecha', desde).lte('fecha', hasta).order('fecha'),
+      ),
   })
 }
 
-export function useAlternarMarca() {
+export interface DiaCalendario {
+  fecha: string
+  periodo: boolean
+  sintomas: string[]
+  nota: string
+}
+
+/** Guarda todo lo de un día de una vez: período, síntomas (lista) y nota */
+export function useGuardarDia() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ fecha, marca, activa, nota }: { fecha: string; marca: MarcaCalendario['marca']; activa: boolean; nota?: string | null }) => {
-      if (activa) {
-        const { error } = await supabase.from('calendario_personal').upsert({ fecha, marca, nota: nota ?? null }, { onConflict: 'perfil_id,fecha,marca' })
+    mutationFn: async (d: DiaCalendario) => {
+      const filas: { marca: MarcaCalendario['marca']; activa: boolean; nota: string | null }[] = [
+        { marca: 'periodo', activa: d.periodo, nota: null },
+        { marca: 'sintoma', activa: d.sintomas.length > 0, nota: d.sintomas.join(', ') || null },
+        { marca: 'nota', activa: d.nota.trim().length > 0, nota: d.nota.trim() || null },
+      ]
+      const poner = filas.filter((f) => f.activa).map((f) => ({ fecha: d.fecha, marca: f.marca, nota: f.nota }))
+      const sacar = filas.filter((f) => !f.activa).map((f) => f.marca)
+      if (poner.length) {
+        const { error } = await supabase.from('calendario_personal').upsert(poner, { onConflict: 'perfil_id,fecha,marca' })
         if (error) throw error
-      } else {
-        const { error } = await supabase.from('calendario_personal').delete().eq('fecha', fecha).eq('marca', marca)
+      }
+      if (sacar.length) {
+        const { error } = await supabase.from('calendario_personal').delete().eq('fecha', d.fecha).in('marca', sacar)
         if (error) throw error
       }
     },
