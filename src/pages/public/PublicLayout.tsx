@@ -7,6 +7,7 @@ import { useAjustesPublicos } from '@/features/ajustes/api'
 import { urlPublica } from '@/lib/supabase'
 import { linkInstagram, urlSegura } from '@/lib/telefono'
 import { linkWhatsApp } from '@/lib/whatsapp'
+import { BotonTurno } from './BotonTurno'
 
 const LINKS = [
   { to: '/', etiqueta: 'Inicio', fin: true },
@@ -43,7 +44,7 @@ export function PublicLayout() {
                 {l.etiqueta}
               </NavLink>
             ))}
-            <Link to="/reservar" className="ml-2 rounded-full bg-tinta px-5 py-2.5 text-[15px] font-medium text-white hover:bg-tinta-soft">Pedir turno</Link>
+            <BotonTurno a={a} etiqueta="Pedir turno" className="ml-2 rounded-full bg-tinta px-5 py-2.5 text-[15px] font-medium text-white hover:bg-tinta-soft" />
           </nav>
           <button className="rounded-full p-2 md:hidden" onClick={() => setMenu(!menu)} aria-label="Menú" aria-expanded={menu}>
             {menu ? <X className="size-6" /> : <Menu className="size-6" />}
@@ -54,7 +55,7 @@ export function PublicLayout() {
             {LINKS.map((l) => (
               <NavLink key={l.to} to={l.to} end={l.fin} className="block border-b border-linea/60 py-3.5 text-lg">{l.etiqueta}</NavLink>
             ))}
-            <Link to="/reservar" className="mt-4 block rounded-full bg-tinta py-3 text-center font-medium text-white">Pedir turno</Link>
+            <BotonTurno a={a} etiqueta="Pedir turno" className="mt-4 block rounded-full bg-tinta py-3 text-center font-medium text-white" />
           </nav>
         )}
       </header>

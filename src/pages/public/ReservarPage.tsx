@@ -13,6 +13,7 @@ import { dinero } from '@/lib/formato'
 import { supabase } from '@/lib/supabase'
 import { telefonoValido } from '@/lib/telefono'
 import { linkWhatsApp } from '@/lib/whatsapp'
+import { BotonTurno } from './BotonTurno'
 import { useServiciosPublicos } from './publico'
 
 const PASOS = ['Servicio', 'Fecha', 'Horario', 'Tus datos', 'Confirmar']
@@ -53,8 +54,8 @@ export function ReservarPage() {
   if (a && !a.reservas_web_activas) {
     return (
       <div className="mx-auto max-w-xl px-4 py-16">
-        <Vacio titulo="Las reservas online están pausadas" texto="Escribinos por WhatsApp y te pasamos los horarios disponibles."
-          accion={a.whatsapp ? <a href={linkWhatsApp(a.whatsapp, '¡Hola! Quería pedir un turno 💅')} target="_blank" rel="noreferrer" className={claseBoton('oscuro')}>Escribir por WhatsApp</a> : undefined} />
+        <Vacio titulo="Las reservas online están pausadas" texto="Escribime y te paso los horarios disponibles."
+          accion={<BotonTurno a={a} conIcono className={claseBoton('oscuro')} />} />
       </div>
     )
   }

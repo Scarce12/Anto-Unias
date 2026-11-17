@@ -10,6 +10,7 @@ import { urlPublica } from '@/lib/supabase'
 import { linkInstagram, urlSegura } from '@/lib/telefono'
 import type { AjustesPublicos } from '@/lib/types'
 import { linkWhatsApp } from '@/lib/whatsapp'
+import { canalTurno } from './BotonTurno'
 import { useFotosPublicas, usePromosPublicas, useServiciosPublicos } from './publico'
 
 function lineas(t: string | null | undefined): string[] {
@@ -44,7 +45,7 @@ export function HomePage() {
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-12 sm:px-6 md:grid-cols-2 md:py-20">
           <div className="animate-subir">
             <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-rosa-50 px-3 py-1 text-sm text-rosa-700">
-              <Sparkles className="size-4" /> Uñas · Turnos online
+              <Sparkles className="size-4" /> {a?.reservas_web_activas === false ? `Uñas${a.zona ? ` · ${a.zona}` : ''}` : 'Uñas · Turnos online'}
             </p>
             {isLoading ? <Esqueleto className="h-16 w-3/4" /> : (
               <h1 className="titulo-display text-5xl leading-[1.05] sm:text-6xl">{a?.nombre_negocio || 'Uñas cuidadas, hechas con dedicación'}</h1>
@@ -62,7 +63,7 @@ export function HomePage() {
             </div>
             <div className="mt-6 flex gap-4 text-sm text-gris">
               {a?.whatsapp && <a href={linkWhatsApp(a.whatsapp)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 hover:text-tinta"><MessageCircle className="size-4" /> WhatsApp</a>}
-              {insta && <a href={insta} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 hover:text-tinta"><Instagram className="size-4" /> Instagram</a>}
+              {insta && canalTurno(a)?.href !== insta && <a href={insta} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 hover:text-tinta"><Instagram className="size-4" /> Instagram</a>}
             </div>
           </div>
           <div className="relative">

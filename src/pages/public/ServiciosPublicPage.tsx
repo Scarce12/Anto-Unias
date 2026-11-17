@@ -5,10 +5,13 @@ import { claseBoton } from '@/components/ui/Button'
 import { duracionTexto } from '@/lib/fechas'
 import { dinero } from '@/lib/formato'
 import { urlPublica } from '@/lib/supabase'
+import { useAjustesPublicos } from '@/features/ajustes/api'
+import { BotonTurno } from './BotonTurno'
 import { useServiciosPublicos } from './publico'
 
 export function ServiciosPublicPage() {
   const q = useServiciosPublicos()
+  const { data: a } = useAjustesPublicos()
   if (q.error) return <div className="mx-auto max-w-3xl p-6"><ErrorCarga error={q.error} reintentar={() => q.refetch()} /></div>
   if (q.isLoading) return <Cargando className="min-h-[50vh]" />
   const { servicios, categorias } = q.data!
@@ -24,7 +27,7 @@ export function ServiciosPublicPage() {
       <h1 className="titulo-display text-5xl">Servicios y precios</h1>
       <p className="mt-2 text-tinta-soft">Precios vigentes. La duración es aproximada.</p>
       {servicios.length === 0 ? (
-        <Vacio icono={<Sparkles />} titulo="Muy pronto" texto="Estamos cargando los servicios. Mientras tanto, escribinos por WhatsApp." />
+        <Vacio icono={<Sparkles />} titulo="Muy pronto" texto="Estamos cargando los servicios. Mientras tanto, escribinos." />
       ) : (
         <div className="mt-10 space-y-12">
           {grupos.map((g) => (
@@ -41,7 +44,7 @@ export function ServiciosPublicPage() {
                       </div>
                       <p className="mt-0.5 flex items-center gap-1 text-sm text-gris"><Clock className="size-3.5" /> {duracionTexto(s.duracion_min)}</p>
                       {s.descripcion && <p className="mt-2 whitespace-pre-line text-[15px] text-tinta-soft">{s.descripcion}</p>}
-                      <Link to={`/reservar?servicio=${s.id}`} className="mt-3 inline-block text-sm font-medium text-rosa-600 hover:underline">Reservar →</Link>
+                      {a?.reservas_web_activas !== false && <Link to={`/reservar?servicio=${s.id}`} className="mt-3 inline-block text-sm font-medium text-rosa-600 hover:underline">Reservar →</Link>}
                     </div>
                   </div>
                 ))}
@@ -62,7 +65,7 @@ export function ServiciosPublicPage() {
               </ul>
             </section>
           )}
-          <div className="text-center"><Link to="/reservar" className={claseBoton('oscuro', 'lg')}>Pedir turno</Link></div>
+          <div className="text-center"><BotonTurno a={a} conIcono className={claseBoton('oscuro', 'lg')} /></div>
         </div>
       )}
     </div>
