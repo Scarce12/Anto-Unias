@@ -45,6 +45,17 @@ export function telefonoValido(p: string | null | undefined): boolean {
   return !!n && n.length >= 8 && n.length <= 15
 }
 
+/** Solo deja pasar links https (evita links "javascript:" u otros esquemas peligrosos) */
+export function urlSegura(u: string | null | undefined): string | null {
+  if (!u) return null
+  try {
+    const url = new URL(u.trim())
+    return url.protocol === 'https:' ? url.href : null
+  } catch {
+    return null
+  }
+}
+
 export function linkInstagram(usuario: string | null | undefined): string | null {
   const u = normalizarInstagram(usuario)
   return u ? `https://instagram.com/${u}` : null

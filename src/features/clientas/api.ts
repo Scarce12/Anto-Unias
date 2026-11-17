@@ -14,9 +14,9 @@ export function useClientas(filtro: { busqueda?: string; soloFijas?: boolean; in
     queryFn: async () => {
       let q = supabase.from('clientas_resumen').select('*').eq('activa', !filtro.inactivas)
       if (filtro.soloFijas) q = q.eq('es_fija', true)
-      const b = filtro.busqueda?.trim()
-      if (b) {
-        const s = b.replace(/[%,()]/g, ' ').trim()
+      // Se quitan los caracteres con significado especial en los filtros de la API
+      const s = (filtro.busqueda ?? '').replace(/[^\p{L}\p{N}@._\s+-]/gu, ' ').replace(/\s+/g, ' ').trim().slice(0, 60)
+      if (s) {
         const digitos = s.replace(/\D/g, '')
         const ors = [`nombre.ilike.%${s}%`, `apellido.ilike.%${s}%`, `instagram_norm.ilike.%${s.replace(/^@/, '').toLowerCase()}%`]
         if (digitos.length >= 3) ors.push(`whatsapp_norm.ilike.%${digitos}%`)

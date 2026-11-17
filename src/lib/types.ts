@@ -30,6 +30,7 @@ export interface Ajustes {
   anticipacion_min_horas: number
   ventana_reserva_dias: number
   max_pendientes_por_contacto: number
+  max_reservas_web_por_hora: number
   sena_requerida: boolean
   sena_tipo: 'monto' | 'porcentaje'
   sena_valor: number

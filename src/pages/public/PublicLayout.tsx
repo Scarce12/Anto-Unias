@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAjustesPublicos } from '@/features/ajustes/api'
 import { urlPublica } from '@/lib/supabase'
-import { linkInstagram } from '@/lib/telefono'
+import { linkInstagram, urlSegura } from '@/lib/telefono'
 import { linkWhatsApp } from '@/lib/whatsapp'
 
 const LINKS = [
@@ -73,7 +73,7 @@ export function PublicLayout() {
             {(a?.direccion || a?.zona) && (
               <p className="flex items-start gap-2">
                 <MapPin className="mt-0.5 size-4 text-rosa-500" />
-                {a.maps_url ? <a href={a.maps_url} target="_blank" rel="noreferrer" className="hover:underline">{[a.direccion, a.zona].filter(Boolean).join(', ')}</a> : [a.direccion, a.zona].filter(Boolean).join(', ')}
+                {urlSegura(a.maps_url) ? <a href={urlSegura(a.maps_url)!} target="_blank" rel="noreferrer" className="hover:underline">{[a.direccion, a.zona].filter(Boolean).join(', ')}</a> : [a.direccion, a.zona].filter(Boolean).join(', ')}
               </p>
             )}
             {a?.whatsapp && <a href={linkWhatsApp(a.whatsapp)} target="_blank" rel="noreferrer" className="flex items-center gap-2 hover:underline"><MessageCircle className="size-4 text-rosa-500" /> {a.whatsapp}</a>}

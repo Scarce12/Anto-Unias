@@ -160,10 +160,10 @@ export function ReservarPage() {
 
         {paso === 3 && (
           <div className="space-y-4">
-            <Input etiqueta="Nombre" autoComplete="given-name" value={datos.nombre} onChange={(e) => setDatos({ ...datos, nombre: e.target.value })} error={errores.nombre} />
-            <Input etiqueta="WhatsApp" type="tel" inputMode="tel" autoComplete="tel" placeholder="11 2345-6789" value={datos.whatsapp} onChange={(e) => setDatos({ ...datos, whatsapp: e.target.value })} error={errores.whatsapp} />
-            <Input etiqueta="Instagram" opcional placeholder="@usuario" autoCapitalize="none" value={datos.instagram} onChange={(e) => setDatos({ ...datos, instagram: e.target.value })} ayuda="Con WhatsApp o Instagram alcanza." />
-            <Textarea etiqueta="¿Algo que quieras contarnos?" opcional rows={3} value={datos.nota} onChange={(e) => setDatos({ ...datos, nota: e.target.value })} placeholder="Diseño que te gustaría, si tenés producto puesto, alergias…" />
+            <Input etiqueta="Nombre" autoComplete="given-name" maxLength={80} value={datos.nombre} onChange={(e) => setDatos({ ...datos, nombre: e.target.value })} error={errores.nombre} />
+            <Input etiqueta="WhatsApp" maxLength={30} type="tel" inputMode="tel" autoComplete="tel" placeholder="11 2345-6789" value={datos.whatsapp} onChange={(e) => setDatos({ ...datos, whatsapp: e.target.value })} error={errores.whatsapp} />
+            <Input etiqueta="Instagram" opcional maxLength={60} placeholder="@usuario" autoCapitalize="none" value={datos.instagram} onChange={(e) => setDatos({ ...datos, instagram: e.target.value })} ayuda="Con WhatsApp o Instagram alcanza." />
+            <Textarea etiqueta="¿Algo que quieras contarnos?" opcional maxLength={500} rows={3} value={datos.nota} onChange={(e) => setDatos({ ...datos, nota: e.target.value })} placeholder="Diseño que te gustaría, si tenés producto puesto, alergias…" />
             <p className="text-xs text-gris">Tus datos se usan solo para coordinar el turno.</p>
           </div>
         )}

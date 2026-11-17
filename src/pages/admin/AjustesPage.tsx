@@ -15,7 +15,7 @@ import { mensajeError } from '@/lib/errores'
 import { parseDinero } from '@/lib/formato'
 import { borrarImagen, subirImagen } from '@/lib/imagenes'
 import { supabase, urlPublica } from '@/lib/supabase'
-import { telefonoValido } from '@/lib/telefono'
+import { telefonoValido, urlSegura } from '@/lib/telefono'
 import type { Ajustes } from '@/lib/types'
 
 type Seccion = 'negocio' | 'horarios' | 'reservas' | 'finanzas' | 'mensajes' | 'cuenta'
@@ -95,7 +95,7 @@ function Negocio({ a }: { a: Ajustes }) {
         <Input contenedor="sm:col-span-2" etiqueta="Link de Google Maps" opcional value={f.maps_url ?? ''} onChange={(e) => set('maps_url', e.target.value)} />
         <Textarea contenedor="sm:col-span-2" etiqueta="Texto de horarios para la web" opcional rows={2} value={f.horarios_texto ?? ''} onChange={(e) => set('horarios_texto', e.target.value)} ayuda="Si lo dejás vacío, se arma solo con tus horarios de atención." />
       </Tarjeta>
-      <Pie cargando={guardando} onClick={() => enviar(campos, () => (f.whatsapp && !telefonoValido(f.whatsapp) ? 'El WhatsApp no parece válido.' : null))} />
+      <Pie cargando={guardando} onClick={() => enviar(campos, () => (f.whatsapp && !telefonoValido(f.whatsapp) ? 'El WhatsApp no parece válido.' : f.maps_url && !urlSegura(f.maps_url) ? 'El link de Google Maps tiene que empezar con https://' : null))} />
     </div>
   )
 }
@@ -204,10 +204,11 @@ function Reservas({ a }: { a: Ajustes }) {
         <h2 className="titulo-display text-xl">Reservas desde la web</h2>
         <Toggle checked={f.reservas_web_activas} onChange={(v) => set('reservas_web_activas', v)} etiqueta="Recibir pedidos de turno online" descripcion="Si lo apagás, la web muestra solo el botón de WhatsApp." />
         <Toggle checked={f.confirmacion_automatica} onChange={(v) => set('confirmacion_automatica', v)} etiqueta="Confirmar automáticamente" descripcion="Si está apagado, cada pedido queda “pendiente” hasta que lo confirmes vos (recomendado)." />
-        <div className="grid gap-4 pt-2 sm:grid-cols-3">
+        <div className="grid gap-4 pt-2 sm:grid-cols-2">
           <Input type="number" inputMode="numeric" etiqueta="Anticipación mínima (horas)" value={f.anticipacion_min_horas} onChange={(e) => set('anticipacion_min_horas', Number(e.target.value))} />
           <Input type="number" inputMode="numeric" etiqueta="Se puede reservar hasta (días)" value={f.ventana_reserva_dias} onChange={(e) => set('ventana_reserva_dias', Number(e.target.value))} />
           <Input type="number" inputMode="numeric" etiqueta="Pedidos pendientes por persona" value={f.max_pendientes_por_contacto} onChange={(e) => set('max_pendientes_por_contacto', Number(e.target.value))} ayuda="Evita reservas en masa." />
+          <Input type="number" inputMode="numeric" etiqueta="Máximo de pedidos web por hora" value={f.max_reservas_web_por_hora} onChange={(e) => set('max_reservas_web_por_hora', Number(e.target.value))} ayuda="Freno contra spam: si se supera, la web pide esperar." />
         </div>
       </Tarjeta>
       <Tarjeta className="space-y-3 p-5">
@@ -225,7 +226,7 @@ function Reservas({ a }: { a: Ajustes }) {
         )}
         <Textarea etiqueta="Política de cancelación" opcional rows={2} value={f.politica_cancelacion ?? ''} onChange={(e) => set('politica_cancelacion', e.target.value)} placeholder="Ej: Avisá con 24 h de anticipación. La seña no se devuelve si no venís." />
       </Tarjeta>
-      <Pie cargando={guardando} onClick={() => enviar(['reservas_web_activas', 'confirmacion_automatica', 'anticipacion_min_horas', 'ventana_reserva_dias', 'max_pendientes_por_contacto', 'sena_requerida', 'sena_tipo', 'sena_valor', 'datos_transferencia', 'politica_cancelacion'],
+      <Pie cargando={guardando} onClick={() => enviar(['reservas_web_activas', 'confirmacion_automatica', 'anticipacion_min_horas', 'ventana_reserva_dias', 'max_pendientes_por_contacto', 'max_reservas_web_por_hora', 'sena_requerida', 'sena_tipo', 'sena_valor', 'datos_transferencia', 'politica_cancelacion'],
         () => (f.sena_tipo === 'porcentaje' && f.sena_valor > 100 ? 'El porcentaje de seña no puede superar 100.' : null))} />
     </div>
   )
@@ -350,7 +351,60 @@ function Cuenta() {
     <div className="space-y-5">
       <CambiarClave />
       <Equipo />
+      <CopiaSeguridad />
     </div>
+  )
+}
+
+const TABLAS_COPIA = [
+  'ajustes_negocio', 'horarios_laborales', 'clientas', 'categorias_servicio', 'servicios', 'turnos', 'turno_items', 'pagos',
+  'creditos', 'categorias_gasto', 'gastos', 'bloqueos', 'promociones', 'promocion_servicios', 'categorias_foto', 'fotos',
+  'cumpleanos_extra', 'avisos', 'aviso_clientas',
+]
+
+/** Descarga todos los datos del negocio en un archivo JSON (las fotos quedan en Supabase Storage) */
+function CopiaSeguridad() {
+  const perfil = usePerfil()
+  const [cargando, setCargando] = useState(false)
+  if (perfil.data?.rol !== 'duena') return null
+
+  const descargar = async () => {
+    setCargando(true)
+    try {
+      const copia: Record<string, unknown[]> = {}
+      for (const tabla of TABLAS_COPIA) {
+        const filas: unknown[] = []
+        for (let desde = 0; ; desde += 1000) {
+          const { data, error } = await supabase.from(tabla).select('*').range(desde, desde + 999)
+          if (error) throw error
+          filas.push(...(data ?? []))
+          if (!data || data.length < 1000) break
+        }
+        copia[tabla] = filas
+      }
+      const blob = new Blob([JSON.stringify({ generado: new Date().toISOString(), tablas: copia }, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `copia-seguridad-${new Date().toISOString().slice(0, 10)}.json`
+      a.click()
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+      toast.success('Copia descargada. Guardala en un lugar seguro (tiene datos de tus clientas).')
+    } catch (e) {
+      toast.error(mensajeError(e))
+    } finally {
+      setCargando(false)
+    }
+  }
+
+  return (
+    <Tarjeta className="max-w-lg space-y-3 p-5">
+      <h2 className="titulo-display text-xl">Copia de seguridad</h2>
+      <p className="text-sm text-gris">
+        Descarga todos tus datos (clientas, turnos, pagos, gastos, servicios y ajustes) en un archivo. Conviene hacerlo una vez por mes y guardarlo en tu Drive o en la compu.
+      </p>
+      <Button variante="secundario" cargando={cargando} onClick={descargar}>Descargar copia</Button>
+    </Tarjeta>
   )
 }
 

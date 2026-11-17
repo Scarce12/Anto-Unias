@@ -7,7 +7,7 @@ import { useAjustesPublicos } from '@/features/ajustes/api'
 import { DIAS_SEMANA, duracionTexto } from '@/lib/fechas'
 import { dinero } from '@/lib/formato'
 import { urlPublica } from '@/lib/supabase'
-import { linkInstagram } from '@/lib/telefono'
+import { linkInstagram, urlSegura } from '@/lib/telefono'
 import type { AjustesPublicos } from '@/lib/types'
 import { linkWhatsApp } from '@/lib/whatsapp'
 import { useFotosPublicas, usePromosPublicas, useServiciosPublicos } from './publico'
@@ -151,7 +151,7 @@ export function HomePage() {
             <div className="tarjeta p-6">
               <h2 className="titulo-display mb-3 flex items-center gap-2 text-3xl"><MapPin className="size-6 text-rosa-500" /> Ubicación</h2>
               <p className="text-tinta-soft">{[a.direccion, a.zona].filter(Boolean).join(', ')}</p>
-              {a.maps_url && <a href={a.maps_url} target="_blank" rel="noreferrer" className="mt-3 inline-block text-sm text-rosa-600 hover:underline">Abrir en Google Maps</a>}
+              {urlSegura(a.maps_url) && <a href={urlSegura(a.maps_url)!} target="_blank" rel="noreferrer" className="mt-3 inline-block text-sm text-rosa-600 hover:underline">Abrir en Google Maps</a>}
             </div>
           )}
         </section>

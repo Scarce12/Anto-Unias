@@ -81,7 +81,7 @@ insert into horarios_laborales (dia_semana, hora_inicio, hora_fin) values (2, '0
 select pruebas.falla($$insert into horarios_laborales (dia_semana, hora_inicio, hora_fin) values (2, '12:00', '14:00')$$, 'franjas_sin_superponer', 'franjas del mismo día no se superponen');
 
 -- Turnos desde el panel
-select guardar_turno(null, :'maria', (:'martes'::date + time '10:00') at time zone zona_negocio(),
+select guardar_turno(null, :'maria', (:'martes'::date + time '10:00') at time zone 'America/Argentina/Buenos_Aires',
   jsonb_build_array(jsonb_build_object('servicio_id', :'semi', 'nombre', 'Semi liso', 'precio', 15000, 'duracion_min', 60)),
   null, 'confirmado', 0, null, 5000, null) as t1 \gset
 select pruebas.ok((select total from turnos where id = :'t1') = 15000, 'total del turno = suma de ítems');
@@ -89,11 +89,11 @@ select pruebas.ok((select fin - inicio from turnos where id = :'t1') = interval 
 select pruebas.ok((select confirmado_en is not null from turnos where id = :'t1'), 'marca confirmado_en');
 
 select pruebas.falla(format($$select guardar_turno(null, %L, %L, %L::jsonb)$$, :'camila',
-  (:'martes'::date + time '10:30') at time zone zona_negocio(),
+  (:'martes'::date + time '10:30') at time zone 'America/Argentina/Buenos_Aires',
   jsonb_build_array(jsonb_build_object('nombre', 'Semi', 'precio', 1, 'duracion_min', 60))), 'superpone', 'no permite turnos superpuestos');
 
 -- Turno pegado (11:00) sí se permite
-select guardar_turno(null, :'camila', (:'martes'::date + time '11:00') at time zone zona_negocio(),
+select guardar_turno(null, :'camila', (:'martes'::date + time '11:00') at time zone 'America/Argentina/Buenos_Aires',
   jsonb_build_array(jsonb_build_object('servicio_id', :'semi', 'nombre', 'Semi liso', 'precio', 15000, 'duracion_min', 60),
                     jsonb_build_object('servicio_id', :'deco', 'nombre', 'Deco', 'precio', 2000, 'duracion_min', 30, 'es_adicional', true))) as t2 \gset
 select pruebas.ok((select total from turnos where id = :'t2') = 17000, 'servicio + adicional suman precio');
@@ -101,20 +101,20 @@ select pruebas.ok((select fin - inicio from turnos where id = :'t2') = interval 
 select pruebas.ok((select servicios_texto from turnos_detalle where id = :'t2') = 'Semi liso + Deco', 'texto de servicios');
 
 -- Conflictos no bloqueantes
-select pruebas.ok(exists (select 1 from conflictos_horario((:'martes'::date + time '13:30') at time zone zona_negocio(),
-  (:'martes'::date + time '14:00') at time zone zona_negocio()) where tipo = 'fuera_de_horario'), 'avisa fuera de horario (descanso)');
+select pruebas.ok(exists (select 1 from conflictos_horario((:'martes'::date + time '13:30') at time zone 'America/Argentina/Buenos_Aires',
+  (:'martes'::date + time '14:00') at time zone 'America/Argentina/Buenos_Aires') where tipo = 'fuera_de_horario'), 'avisa fuera de horario (descanso)');
 
 -- Cancelar libera el horario
 update turnos set estado = 'cancelado', nota_estado = 'Se enfermó' where id = :'t2';
-select guardar_turno(null, :'sofia', (:'martes'::date + time '11:30') at time zone zona_negocio(),
+select guardar_turno(null, :'sofia', (:'martes'::date + time '11:30') at time zone 'America/Argentina/Buenos_Aires',
   jsonb_build_array(jsonb_build_object('nombre', 'Semi liso', 'precio', 15000, 'duracion_min', 60))) as t3 \gset
 select pruebas.ok(:'t3' is not null, 'turno cancelado libera el horario');
 select pruebas.falla(format($$update turnos set estado = 'confirmado' where id = %L$$, :'t2'), 'turnos_sin_superposicion', 'reactivar turno cancelado superpuesto falla');
 
 -- Reprogramar (mover t3 a 16:00)
-select guardar_turno(:'t3', null, (:'martes'::date + time '16:00') at time zone zona_negocio(),
+select guardar_turno(:'t3', null, (:'martes'::date + time '16:00') at time zone 'America/Argentina/Buenos_Aires',
   jsonb_build_array(jsonb_build_object('nombre', 'Semi liso', 'precio', 15000, 'duracion_min', 60))) is not null as ok \gset
-select pruebas.ok((select (inicio at time zone zona_negocio())::time from turnos where id = :'t3') = '16:00', 'reprogramación');
+select pruebas.ok((select (inicio at time zone 'America/Argentina/Buenos_Aires')::time from turnos where id = :'t3') = '16:00', 'reprogramación');
 
 -- Precio histórico
 update servicios set precio = 20000, duracion_min = 90 where id = :'semi';
@@ -183,42 +183,51 @@ select pruebas.ok((select count(*) from calendario_personal) = 1, 'calendario pe
 -- ---------------------------------------------------------------------
 -- Bloqueos y reservas web (como público)
 -- ---------------------------------------------------------------------
-insert into bloqueos (inicio, fin, motivo) values ((:'martes'::date + time '17:00') at time zone zona_negocio(),
-  (:'martes'::date + time '18:00') at time zone zona_negocio(), 'Yoga');
+insert into bloqueos (inicio, fin, motivo) values ((:'martes'::date + time '17:00') at time zone 'America/Argentina/Buenos_Aires',
+  (:'martes'::date + time '18:00') at time zone 'America/Argentina/Buenos_Aires', 'Yoga');
 reset role;
 
 set role anon;
 select set_config('request.jwt.claim.sub', '', false);
-select pruebas.ok((select count(*) from clientas) = 0, 'anon no ve clientas');
-select pruebas.ok((select count(*) from turnos) = 0, 'anon no ve turnos');
-select pruebas.ok((select count(*) from pagos) = 0, 'anon no ve pagos');
+select pruebas.falla($$select count(*) from clientas$$, 'permission denied', 'anon no puede leer clientas');
+select pruebas.falla($$select count(*) from turnos$$, 'permission denied', 'anon no puede leer turnos');
+select pruebas.falla($$select count(*) from pagos$$, 'permission denied', 'anon no puede leer pagos');
+select pruebas.falla($$select count(*) from turnos_detalle$$, 'permission denied', 'anon no puede leer la vista de turnos');
+select pruebas.falla($$select count(*) from clientas_resumen$$, 'permission denied', 'anon no puede leer la vista de clientas');
+select pruebas.falla($$select count(*) from ingresos$$, 'permission denied', 'anon no puede leer ingresos');
+select pruebas.falla($$select * from ajustes_negocio$$, 'permission denied', 'anon no puede leer ajustes internos');
+select pruebas.falla($$select * from calendario_personal$$, 'permission denied', 'anon no puede leer calendarios');
+select pruebas.falla($$select * from auditoria$$, 'permission denied', 'anon no puede leer auditoría');
+select pruebas.falla($$select normalizar_telefono('1')$$, 'permission denied', 'anon no puede ejecutar funciones internas');
+select pruebas.falla($$update servicios set precio = 1$$, 'permission denied', 'anon no puede modificar servicios');
+select pruebas.falla($$delete from fotos$$, 'permission denied', 'anon no puede borrar fotos');
 select pruebas.ok((select count(*) from servicios) = 2, 'anon ve solo servicios activos');
 select pruebas.ok((ajustes_publicos() ->> 'zona_horaria') is not null and not (ajustes_publicos() ? 'plantilla_confirmacion'), 'ajustes públicos sin datos internos');
 select pruebas.falla($$select resumen_dashboard()$$, 'permission denied', 'anon no puede usar el dashboard');
-select pruebas.falla($$insert into clientas (nombre) values ('hack')$$, 'row-level security', 'anon no puede crear clientas');
+select pruebas.falla($$insert into clientas (nombre) values ('hack')$$, 'permission denied', 'anon no puede crear clientas');
 select pruebas.falla($$select * from horarios_disponibles(current_date + 7, 60, null, false)$$, 'permission denied', 'anon no usa disponibilidad interna');
 
 -- Semi ahora dura 90 min. Martes: 9-13 (turno María 10-11 finalizado) y 15-20 (bloqueo 17-18)
-select array_agg(to_char(s at time zone zona_negocio(), 'HH24:MI') order by s) as slots
+select array_agg(to_char(s at time zone 'America/Argentina/Buenos_Aires', 'HH24:MI') order by s) as slots
   from horarios_disponibles_web(array[:'semi'::uuid], :'martes'::date) s \gset
 \echo Horarios disponibles martes (90 min): :slots
 select pruebas.ok(:'slots' = '{11:00,11:30,15:00,15:30,18:00,18:30}', 'disponibilidad respeta turnos, bloqueos, descanso y nueva duración');
 select pruebas.ok((select count(*) from dias_disponibles_web(array[:'semi'::uuid], current_date, current_date + 20)) >= 2, 'días disponibles');
 select pruebas.ok((select count(*) from horarios_disponibles_web(array[:'viejo'::uuid], :'martes'::date)) = 0, 'servicio inactivo no da horarios');
 
-select solicitar_turno(array[:'semi'::uuid], (:'martes'::date + time '15:00') at time zone zona_negocio(),
+select solicitar_turno(array[:'semi'::uuid], (:'martes'::date + time '15:00') at time zone 'America/Argentina/Buenos_Aires',
   'Lucía', '11 4444-5555', null, 'Quiero color nude') as web1 \gset
 select pruebas.ok((:'web1'::jsonb ->> 'estado') = 'pendiente', 'reserva web queda pendiente');
 select pruebas.falla(format($$select solicitar_turno(array[%L::uuid], %L, 'Otra', '1199998888')$$, :'semi',
-  (:'martes'::date + time '15:30') at time zone zona_negocio()), 'no está disponible', 'web no permite superposición');
+  (:'martes'::date + time '15:30') at time zone 'America/Argentina/Buenos_Aires'), 'no está disponible', 'web no permite superposición');
 select pruebas.falla(format($$select solicitar_turno(array[%L::uuid], %L, 'Sin contacto')$$, :'semi',
-  (:'martes'::date + time '18:00') at time zone zona_negocio()), 'whatsapp o un instagram', 'web exige algún contacto');
+  (:'martes'::date + time '18:00') at time zone 'America/Argentina/Buenos_Aires'), 'whatsapp o un instagram', 'web exige algún contacto');
 select pruebas.falla(format($$select solicitar_turno(array[%L::uuid], %L, 'Solo deco', '1133332222')$$, :'deco',
-  (:'martes'::date + time '18:00') at time zone zona_negocio()), 'servicio principal', 'web exige servicio principal');
+  (:'martes'::date + time '18:00') at time zone 'America/Argentina/Buenos_Aires'), 'servicio principal', 'web exige servicio principal');
 select pruebas.falla(format($$select solicitar_turno(array[%L::uuid], %L, 'Fuera', '1133332222')$$, :'semi',
-  (:'martes'::date + time '13:00') at time zone zona_negocio()), 'no está disponible', 'web no permite fuera de horario');
+  (:'martes'::date + time '13:00') at time zone 'America/Argentina/Buenos_Aires'), 'no está disponible', 'web no permite fuera de horario');
 -- María (WhatsApp ya registrado) reserva: se vincula a su ficha
-select solicitar_turno(array[:'semi'::uuid], (:'martes'::date + time '18:00') at time zone zona_negocio(),
+select solicitar_turno(array[:'semi'::uuid], (:'martes'::date + time '18:00') at time zone 'America/Argentina/Buenos_Aires',
   'Mary', '1112345678') as web2 \gset
 reset role;
 select pruebas.ok((select clienta_id from turnos where id = (:'web2'::jsonb ->> 'id')::uuid) = :'maria', 'reserva web se vincula por WhatsApp');
@@ -247,6 +256,39 @@ select set_config('request.jwt.claim.sub', :'duena', false);
 select pruebas.falla($$select agregar_staff('nadie@test.local')$$, 'no hay ninguna cuenta', 'agregar email inexistente avisa');
 select agregar_staff('intrusa@test.local') is not null as ok \gset
 select pruebas.ok((select count(*) from listar_equipo()) = 2, 'dueña agrega staff y lo lista');
+reset role;
+
+
+-- ---------------------------------------------------------------------
+-- Seguridad extra
+-- ---------------------------------------------------------------------
+set role authenticated;
+select set_config('request.jwt.claim.sub', :'duena', false);
+select pruebas.falla($$update ajustes_negocio set maps_url = 'javascript:alert(1)' where id = 1$$, 'ajustes_maps_https', 'maps_url solo acepta https');
+update ajustes_negocio set maps_url = 'https://maps.app.goo.gl/abc123' where id = 1;
+select pruebas.falla($$insert into fotos (storage_path) values ('../../etc/passwd')$$, 'fotos_path_seguro', 'ruta de foto maliciosa rechazada');
+select pruebas.falla($$insert into clientas (nombre, observaciones) values ('Larga', repeat('x', 5000))$$, 'clientas_observaciones_largo', 'textos gigantes rechazados');
+select pruebas.falla(format($$delete from perfiles where id = %L$$, :'duena'), 'a vos misma', 'la dueña no puede quitarse el acceso');
+select pruebas.falla(format($$update perfiles set rol = 'staff' where id = %L$$, :'duena'), 'al menos una dueña', 'no se puede degradar a la única dueña');
+-- auditoría: borrar un gasto deja registro con los datos previos
+delete from gastos where descripcion = 'Esmaltes';
+select pruebas.ok((select datos_previos ->> 'descripcion' from auditoria where tabla = 'gastos' and operacion = 'DELETE' order by id desc limit 1) = 'Esmaltes', 'auditoría guarda lo borrado');
+select pruebas.falla($$delete from auditoria$$, 'permission denied', 'nadie puede borrar la auditoría desde la app');
+select pruebas.ok((select count(*) from auditoria) > 0, 'la dueña puede leer la auditoría');
+update ajustes_negocio set max_reservas_web_por_hora = 2 where id = 1;
+reset role;
+
+set role anon;
+select set_config('request.jwt.claim.sub', '', false);
+select pruebas.falla(format($$select solicitar_turno(array[%L::uuid], %L, 'Spam', '1177776666')$$, :'semi',
+  (:'martes'::date + time '19:00') at time zone 'America/Argentina/Buenos_Aires'), 'muchos pedidos', 'límite global de pedidos web por hora');
+reset role;
+update ajustes_negocio set max_reservas_web_por_hora = 10 where id = 1;
+set role anon;
+select pruebas.falla(format($$select solicitar_turno(array[%L::uuid], %L, '!!!', '1177776666')$$, :'semi',
+  (:'martes'::date + time '19:00') at time zone 'America/Argentina/Buenos_Aires'), 'tu nombre', 'nombre sin letras rechazado');
+select pruebas.falla(format($$select solicitar_turno(array[%L::uuid], %L, 'Ana', null, '<script>')$$, :'semi',
+  (:'martes'::date + time '19:00') at time zone 'America/Argentina/Buenos_Aires'), 'no parece válido', 'instagram con caracteres raros rechazado');
 reset role;
 
 \echo '==== TODAS LAS PRUEBAS PASARON ===='

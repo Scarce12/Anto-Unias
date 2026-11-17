@@ -55,7 +55,7 @@ Abrí <http://localhost:5173>.
 
 - Después de crear tu cuenta podés desactivar **Allow new users to sign up** en Supabase (Authentication → Sign In / Providers). Si más adelante sumás a alguien, lo activás un momento, esa persona crea su cuenta, y vos le das acceso desde **Ajustes → Cuenta → Equipo**. Igual, cualquier cuenta que no agregues no ve ningún dato.
 - Nunca compartas la *service_role key*; la app no la necesita.
-- Supabase hace copias de seguridad diarias en el plan gratuito con retención limitada; para más tranquilidad podés exportar periódicamente desde **Finanzas → Exportar** y **Clientas → Exportar**.
+- Las copias automáticas de Supabase dependen del plan. Usá **Ajustes → Cuenta → Descargar copia** una vez por mes. Más detalles en [07_SEGURIDAD.md](07_SEGURIDAD.md).
 
 ## Desarrollo
 

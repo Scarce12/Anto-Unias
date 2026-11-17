@@ -27,6 +27,9 @@ export function mensajeError(e: unknown): string {
   }
   if (code === '23514' || /check constraint/i.test(msg)) {
     if (/reparto/i.test(msg)) return 'Los porcentajes del reparto tienen que sumar 100%.'
+    if (/_largo/i.test(msg)) return 'Algún texto es demasiado largo. Acortalo un poco.'
+    if (/maps_https/i.test(msg)) return 'El link de Google Maps tiene que empezar con https://'
+    if (/path|segur/i.test(msg)) return 'El archivo no es válido.'
     return 'Revisá los datos: hay un valor que no es válido.'
   }
   if (code === '42501' || /row-level security|permission denied|No autorizado/i.test(msg)) {

@@ -2,7 +2,7 @@
 
 ## 1. Reglas de negocio y seguridad en la base (SQL)
 
-`supabase/tests/10_pruebas.sql` — **84 verificaciones**, todas pasan. Se corren con `npm run test:db` sobre un PostgreSQL local (variables `PGBIN` y `PGPORT`; por defecto `/e/tools/pg/pgsql/bin` y `54329`). Usa `00_stub_supabase.sql` para imitar los roles y `auth.uid()` de Supabase.
+`supabase/tests/10_pruebas.sql` — **104 verificaciones**, todas pasan. Se corren con `npm run test:db` sobre un PostgreSQL local (variables `PGBIN` y `PGPORT`; por defecto `/e/tools/pg/pgsql/bin` y `54329`). Usa `00_stub_supabase.sql` para imitar los roles y `auth.uid()` de Supabase.
 
 Cubre, entre otras:
 - Clientas solo con nombre, solo con Instagram, sin contacto; dos personas con el mismo nombre.

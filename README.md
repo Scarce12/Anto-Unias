@@ -29,6 +29,7 @@ La lógica crítica está en la base de datos (no se puede saltear desde el nave
 - **Guía de uso (para la manicurista)**: [docs/04_GUIA_DE_USO.md](docs/04_GUIA_DE_USO.md)
 - **Base de datos**: [docs/02_BASE_DE_DATOS.md](docs/02_BASE_DE_DATOS.md)
 - **Pruebas**: [docs/05_PRUEBAS.md](docs/05_PRUEBAS.md)
+- **Seguridad**: [docs/07_SEGURIDAD.md](docs/07_SEGURIDAD.md)
 - **Notificaciones automáticas (futuro)**: [docs/06_NOTIFICACIONES_FUTURO.md](docs/06_NOTIFICACIONES_FUTURO.md)
 
 ```bash
